@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 // Stub-корешок, квитанция,пень
 public class PostRepository {
 
     private static Map<Long, Post> posts = new ConcurrentHashMap<>();
-    private static int count;
+    private static AtomicLong count;
 
     public List<Post> all() {
         return new ArrayList<>(posts.values());
@@ -29,9 +30,9 @@ public class PostRepository {
 
     public Post save(Post post) {
         if (post.getId() == 0 || !posts.containsKey(post.getId())) {
-            Post newPost = new Post(count, post.getContent());
-            posts.put((long) count, newPost);
-            count++;
+            Post newPost = new Post(count.get(), post.getContent());
+            posts.put(count.get(), newPost);
+            count.getAndIncrement();
             return newPost;
         } else if (post.getId() != 0 && posts.containsKey(post.getId())) {
             posts.replace(post.getId(), post);
