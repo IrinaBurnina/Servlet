@@ -1,7 +1,7 @@
 package ru.netology.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import ru.netology.controller.PostController;
-import ru.netology.repository.PostRepository;
 import ru.netology.service.PostService;
 
 import javax.servlet.http.HttpServlet;
@@ -14,39 +14,38 @@ public class MainServlet extends HttpServlet {
     private static final String methodGet = "GET";
     private static final String methodPost = "POST";
     private static final String methodDelete = "DELETE";
-    private static final String pieceOfPath = "/api/posts";
+    private static final String API_POSTS = "/api/posts";
     private static final String dWithSlash = "/\\d+";
 
 
     @Override
     public void init() {
-        final var repository = new PostRepository();
-        final var service = new PostService(repository);
-        controller = new PostController(service);
+        final var context = new AnnotationConfigApplicationContext("ru.netology");
+        controller = context.getBean(PostController.class);
+        var service = context.getBean(PostService.class);
     }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) {
         // если деплоились (развернулись) в root context, то достаточно этого
-        init();
         try {
             final var path = req.getRequestURI();
             final var method = req.getMethod();
             if (method.equals(methodGet)) {
-                if (path.equals(pieceOfPath)) {
+                if (path.equals(API_POSTS)) {
                     all(resp);
                     return;
-                } else if (path.matches(pieceOfPath + dWithSlash)) {
+                } else if (path.matches(API_POSTS + dWithSlash)) {
                     getById(parseId(path), resp);
                     return;
                 }
             } else if (method.equals(methodPost)) {
-                if (path.equals(pieceOfPath)) {
+                if (path.equals(API_POSTS)) {
                     save(resp, req);
                     return;
                 }
             } else if (method.equals(methodDelete)) {
-                if (path.matches(pieceOfPath + dWithSlash)) {
+                if (path.matches(API_POSTS + dWithSlash)) {
                     removeById(parseId(path), resp);
                     return;
                 }
@@ -70,7 +69,7 @@ public class MainServlet extends HttpServlet {
         getController().save(req.getReader(), resp);
     }
 
-    public Long parseId(String path) {
+    public Long parseId(String path) { //распознает из пути запроса id
         return Long.parseLong(path.substring(path.lastIndexOf("/")));
     }
 
